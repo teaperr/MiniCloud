@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MiniCloud.Core;
 using MiniCloud.Entities;
+using MiniCloudServer.Core;
 using MiniCloudServer.Exceptions;
 using MiniCloudServer.Persistence;
 using Server.Services;
@@ -16,40 +17,39 @@ namespace MultiServer.Services
     {
         private readonly MiniCloudContext _dbContext;
         private readonly IEncryptService _encryptService;
-        private readonly Connection _connection;
+        private readonly Session _session;
 
-        public AccountService(MiniCloudContext dbContext, IEncryptService encryptService, Connection connection)
+        public AccountService(MiniCloudContext dbContext, IEncryptService encryptService, Session session)
         {
             _dbContext = dbContext;
             _encryptService=encryptService;
-            _connection = connection;
+            _session = session;
         }
-        public void RegisterUser(string userName, string password)
+        public async Task RegisterUserAsync(string userName, string password)
         {
-            var user=_dbContext.Users.SingleOrDefault(x=>x.UserName==userName);
+            var user=await _dbContext.Users.SingleOrDefaultAsync(x=>x.UserName==userName);
             if(user!=null)
                 throw new MiniCloudException("User with this name already exists");
             user=new User(userName,password);
-            _dbContext.Users.Add(user);
-            _dbContext.SaveChanges();
+            await _dbContext.Users.AddAsync(user);
+            await _dbContext.SaveChangesAsync();
         }
-        public void LoginUser(string userName, string password)
+        public async Task LoginUserAsync(string userName, string password)
         {
-            var user=_dbContext.Users.SingleOrDefault(x=>x.UserName==userName);
+            var user=await _dbContext.Users.SingleOrDefaultAsync(x=>x.UserName==userName);
             if(user==null)
                 throw new MiniCloudException("Invalid Credentials");
             var hashedPassword=_encryptService.Compute(password,user.Salt);
             if(user.HashedPassword!=hashedPassword)
                 throw new MiniCloudException("Invalid Credentials");
-            _connection.Session.AddObject("logged_user_id",user.Id);
+            _session.AddObject("logged_user_id",user.Id);
         }
-        public User GetLoggedUser()
+        public Task<User> GetLoggedUser()
         {
-            object loggedUserIdObject;
-            if(!_connection.Session.TryGetValue("logged_user_id",out loggedUserIdObject))
+            if (!_session.TryGetValue("logged_user_id", out object loggedUserIdObject))
                 throw new MiniCloudException("No one is logged");
             var user=_dbContext.Users.SingleOrDefault(x=>x.Id==(int)loggedUserIdObject);
-            return user;
+            return Task.FromResult(user);
         }
     }
 }

@@ -1,140 +1,116 @@
-﻿using MiniCloudServer.Exceptions;
+﻿using MiniCloudServer.Controllers;
+using MiniCloudServer.Core;
+using MiniCloudServer.Exceptions;
+using MiniCloudServer.Extensions;
 using MiniCloudServer.Persistence;
 using MultiServer.Services;
 using Server.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MiniCloud.Core
 {
-    class RequestHandler
+    public class RequestHandler
     {
         private readonly Connection _currentClient;
-        private readonly AccountService _accountService;
 
         public RequestHandler(Connection currentClientConnection)
         {
             _currentClient = currentClientConnection;
-            var dbContext=new MiniCloudContext();
-            var encryptService=new EncryptService();
-            _accountService=new AccountService(dbContext,encryptService,currentClientConnection);
         }
 
-        public void Handle(string request)
+        public async Task Handle(string request)
         {
-            var command=request.Split().First();
-            switch(command)
-            {
-                //account register [userName] [password]
-                case "register":
-                    RegisterUser(request);
-                    break;
-                case "login":
-                    LoginUser(request);
-                    break;
-                case "say_my_name":
-                    SayMyName();
-                    break;
-                default:
-                    InvalidRequest();
-                    break;
-            }
-            
-        }
-
-        private void SayMyName()
-        {
-            try
-            {
-                var user = _accountService.GetLoggedUser();
-                _currentClient.SendText($"You are {user.UserName}");
-            }
-            catch (MiniCloudException ex)
-            {
-                _currentClient.SendText(ex.Message);
-            }
-        }
-
-        private void LoginUser(string request)
-        {
-            string[] arguments = request.Split();
-            if (arguments.Length < 3 || arguments.Any(x=>String.IsNullOrWhiteSpace(x)))
-            {
-                _currentClient.SendText("Usage: login <user_name> <password>");
-                return;
-            }
-            string userName = arguments[1];
-            string password = arguments[2];
-            try
-            {
-                _accountService.LoginUser(userName,password);
-                _currentClient.SendText($"Welcome");
-            }
-            catch (MiniCloudException ex)
-            {
-                _currentClient.SendText(ex.Message);
-            }
-        }
-
-        private void RegisterUser(string request)
-        {
-            string[] arguments = request.Split();
-            if (arguments.Length < 3 || arguments.Any(x => String.IsNullOrWhiteSpace(x)))
-            {
-                _currentClient.SendText("Usage: register <user_name> <password>");
-                return;
-            }
-            string userName=arguments[1];
-            string password=arguments[2];
             try {
-                _accountService.RegisterUser(userName,password);
-                _currentClient.SendText("Created.");
+                var splitedRequest= request.Split();
+                if(splitedRequest.Length<2)
+                    throw new MiniCloudException("Invalid Request");
+                var controllerName= splitedRequest[0];
+                var controllerType=GetControllerType(controllerName);
+                if(controllerType==null)
+                    throw new MiniCloudException($"Controller {controllerName} doesn't exists");
+
+                var methodName= splitedRequest[1];
+                var methodInfo=GetMethod(controllerType,methodName);
+                if (methodInfo == null)
+                    throw new MiniCloudException($"Method {methodName} doesn't exists in {controllerName}");
+
+                var parameters=methodInfo.GetParameters();
+                var arguments=splitedRequest.Skip(2);
+                if(arguments.Count()!=parameters.Count() || arguments.Any(x=>String.IsNullOrWhiteSpace(x)))
+                {
+                    var correctUsage=GenerateCorrectUsageInfo(controllerName, methodName, parameters.Select(x => x.Name));
+                    throw new MiniCloudException(correctUsage);
+                }
+                    
+                var controller=Activator.CreateInstance(controllerType,_currentClient.Session);
+
+                string response;
+                if(methodInfo.ReturnType==typeof(Task<string>))
+                {
+                    var task= (Task<string>)methodInfo.Invoke(controller, arguments.ToArray());
+                    await task;
+                    response=task.Result;
+                }
+                else
+                    throw new Exception("Wrong return type");
+
+                _currentClient.SendText($"_OK_: {response}");
             }
             catch(MiniCloudException ex)
             {
-                _currentClient.SendText(ex.Message);
+                _currentClient.SendText($"_ERROR_: {ex.Message}");
             }
-
-            
+            catch (Exception)
+            {
+                _currentClient.SendText("_ERROR_: Internal Error");
+            }
         }
 
-        private void InvalidRequest()
+
+
+        private Type GetControllerType(string name)
         {
-            _currentClient.SendText("Invalid request");
+            var asm= typeof(RequestHandler).Assembly;
+            var controller=asm.GetTypes()
+                .Where(x=>typeof(IController).IsAssignableFrom(x))
+                .Where(x=>String.Compare(NormalizeControllerName(x.Name),name)==0)
+                .SingleOrDefault();
+            return controller;
         }
 
-        //private void ListClients()
-        //{
-        //    var stringBuilder=new StringBuilder();
-        //    int number=0;
-        //    foreach(var client in Program.connections)
-        //    {
-        //        stringBuilder.Append($"{number++}. ");
-        //        if(client.FirstName==null)
-        //            stringBuilder.Append("Unnamed");
-        //        else
-        //            stringBuilder.Append($"{client.FirstName} {client.LastName}");
-        //        stringBuilder.AppendLine();
-        //    }
-        //    _currentClient.SendText(stringBuilder.ToString());
-        //}
+        private string NormalizeControllerName(string controllerName)
+        {
+            return controllerName.Replace("Controller", "", StringComparison.InvariantCultureIgnoreCase).ToUnderScore();
+        }
 
-        //private void SetName(string request)
-        //{
-        //    string[] arguments = request.Split();
-        //    if (arguments.Length != 3)
-        //    {
-        //        _currentClient.SendText("Usage: set_name <first_name> <last_name>");
-        //    }
-        //    else
-        //    {
-        //        string firstName = arguments[1];
-        //        string lastName = arguments[2];
-        //        _currentClient.FirstName = firstName;
-        //        _currentClient.LastName = lastName;
-        //        _currentClient.SendText($"Hello {firstName} {lastName}");
-        //    }
-        //}
+        private MethodInfo GetMethod(Type controllerType, string methodName)
+        {
+            return controllerType.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+                .Where(x=> String.Compare(x.Name.ToUnderScore(),methodName)==0)
+                .SingleOrDefault();
+        }
+
+        private string GenerateCorrectUsageInfo(string controllerName, string methodName, IEnumerable<string> parameters)
+        {
+            //"Usage: account login_user <user_name> <password>"
+            var stringBuilder=new StringBuilder();
+            stringBuilder.Append("Usage: ")
+                .Append(controllerName).AppendSpace()
+                .Append(methodName).AppendSpace();
+            foreach(var parameter in parameters)
+            {
+                stringBuilder.Append("<")
+                    .Append(parameter.ToUnderScore())
+                    .Append(">")
+                    .AppendSpace();
+            }
+            return stringBuilder.ToString();
+
+        }
     }
 }

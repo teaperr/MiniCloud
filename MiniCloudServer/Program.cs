@@ -69,7 +69,7 @@ namespace MiniCloud
             string text = GetReceivedText(received);
             Console.WriteLine("Received Text: " + text);
             var requestHandler = new RequestHandler(client);
-            requestHandler.Handle(text);
+            requestHandler.Handle(text).Wait();
             BeginReceive(client.Socket);
         }
         private static string GetReceivedText(int length)

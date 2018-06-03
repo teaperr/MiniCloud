@@ -88,13 +88,17 @@ namespace MultiClient
 
         private static void ReceiveResponse()
         {
-            var buffer = new byte[2048];
-            int received = ClientSocket.Receive(buffer, SocketFlags.None);
-            if (received == 0) return;
-            var data = new byte[received];
-            Array.Copy(buffer, data, received);
-            string text = Encoding.ASCII.GetString(data);
-            Console.WriteLine(text);
+            string text;
+            do {
+                var buffer = new byte[2048];
+                int received = ClientSocket.Receive(buffer, SocketFlags.None);
+                if (received == 0) return;
+                var data = new byte[received];
+                Array.Copy(buffer, data, received);
+                text = Encoding.ASCII.GetString(data);
+                Console.WriteLine(text);
+            }while(!text.StartsWith("_OK_") && !text.StartsWith("_ERROR_"));
+            
         }
     }
 }

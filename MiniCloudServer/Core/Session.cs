@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MiniCloudServer.Exceptions
+namespace MiniCloudServer.Core
 {
     public class Session
     {
