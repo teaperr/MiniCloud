@@ -1,10 +1,6 @@
 ﻿using MiniCloudServer.Controllers;
-using MiniCloudServer.Core;
 using MiniCloudServer.Exceptions;
 using MiniCloudServer.Extensions;
-using MiniCloudServer.Persistence;
-using MultiServer.Services;
-using Server.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MiniCloud.Core
+namespace MiniCloudServer.Core
 {
     public class RequestHandler
     {
@@ -65,7 +61,7 @@ namespace MiniCloud.Core
             {
                 _currentClient.SendText($"_ERROR_: {ex.Message}");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 _currentClient.SendText("_ERROR_: Internal Error");
             }

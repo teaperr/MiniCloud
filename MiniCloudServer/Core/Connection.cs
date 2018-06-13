@@ -1,9 +1,7 @@
-﻿using MiniCloudServer.Core;
-using System.Collections.Generic;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Text;
 
-namespace MiniCloud.Core
+namespace MiniCloudServer.Core
 {
     public class Connection
     {

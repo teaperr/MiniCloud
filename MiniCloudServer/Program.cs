@@ -4,11 +4,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Linq;
-using MiniCloud.Core;
+using MiniCloudServer.Core;
 
 
 //Based on https://github.com/AbleOpus/NetworkingSamples
-namespace MiniCloud
+namespace MiniCloudServer
 {
     class Program
     {

@@ -2,15 +2,17 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MiniCloudServer.Persistence;
 
 namespace MiniCloudServer.Migrations
 {
     [DbContext(typeof(MiniCloudContext))]
-    partial class MiniCloudContextModelSnapshot : ModelSnapshot
+    [Migration("20180613173315_accesses")]
+    partial class accesses
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,7 +37,8 @@ namespace MiniCloudServer.Migrations
 
                     b.HasIndex("DoneeUserId");
 
-                    b.HasIndex("OwnerUserId");
+                    b.HasIndex("OwnerUserId")
+                        .IsUnique();
 
                     b.ToTable("ResourceAccesses");
                 });
@@ -68,8 +71,8 @@ namespace MiniCloudServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("MiniCloudServer.Entities.User", "OwnerUser")
-                        .WithMany()
-                        .HasForeignKey("OwnerUserId")
+                        .WithOne()
+                        .HasForeignKey("MiniCloudServer.Entities.ResourceAccess", "OwnerUserId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 #pragma warning restore 612, 618

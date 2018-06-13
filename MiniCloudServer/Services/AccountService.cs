@@ -1,15 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MiniCloud.Core;
-using MiniCloud.Entities;
 using MiniCloudServer.Core;
+using MiniCloudServer.Entities;
 using MiniCloudServer.Exceptions;
 using MiniCloudServer.Persistence;
 using MiniCloudServer.Services;
 using Server.Services;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MultiServer.Services
@@ -20,6 +16,7 @@ namespace MultiServer.Services
         private readonly IEncryptService _encryptService;
         private readonly Session _session;
         private readonly IDirectoryService _directoryService;
+        private readonly ResourceAccessService _resourceAccessService;
 
         public AccountService(MiniCloudContext dbContext, IEncryptService encryptService, Session session)
         {
@@ -27,6 +24,7 @@ namespace MultiServer.Services
             _encryptService=encryptService;
             _session = session;
             _directoryService=new DirectoryService();
+            _resourceAccessService=new ResourceAccessService();
         }
         public async Task RegisterUserAsync(string userName, string password)
         {
@@ -37,6 +35,7 @@ namespace MultiServer.Services
             await _dbContext.Users.AddAsync(user);
             _directoryService.CreateUserDirectory(userName);
             await _dbContext.SaveChangesAsync();
+            await _resourceAccessService.ShareAccessToResourceAsync(userName, userName, "");
         }
         public async Task LoginUserAsync(string userName, string password)
         {

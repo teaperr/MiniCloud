@@ -23,13 +23,11 @@ namespace MiniCloudServer.Controllers
         }
         public async Task<string> Login(string userName, string password)
         {
-            //"Usage: login <user_name> <password>"
             await _accountService.LoginUserAsync(userName, password);
             return $"Welcome {userName}";
         }
         public async Task<string> Register(string userName, string password)
         {
-            //Usage: register<user_name> < password >
             await _accountService.RegisterUserAsync(userName, password);
             return "Created.";
         }

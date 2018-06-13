@@ -1,10 +1,13 @@
-﻿using MiniCloudServer.Core;
+﻿using Microsoft.EntityFrameworkCore;
+using MiniCloudServer.Core;
 using MiniCloudServer.Exceptions;
+using MiniCloudServer.Persistence;
 using MiniCloudServer.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -12,51 +15,61 @@ namespace MiniCloudServer.Services
 {
     public class DirectoryService : IDirectoryService
     {
-        public const string mainPath = @"C:\MiniCloud";
+        private readonly MiniCloudContext _context;
+        public DirectoryService()
+        {
+            _context=new MiniCloudContext();
+        }
 
         public void CreateDirectory(string userName, string path, string directoryName)
         {
-            string serverPath = GenerateServerPath(userName, path);
+            string serverPath = PathUtilities.GenerateFullPath(userName, path);
             if (!Directory.Exists(serverPath))
                 throw new MiniCloudException("Path is not valid");
             Directory.CreateDirectory($"{serverPath}//{directoryName}");
         }
         public void CreateUserDirectory(string userName)
         {
-            Directory.CreateDirectory(GenerateServerPath(userName));
+            Directory.CreateDirectory(PathUtilities.GenerateFullPath(userName));
         }
-        public XDocument GetDirectoryStructure(string userName)
+        public async Task<XDocument> GetDirectoryStructure(string userName)
         {
-            var path = GenerateServerPath(userName);
-            var dir = new DirectoryInfo(path);
+            var resultDocument = new XDocument();
+            var root=new XElement("root");
 
-            var doc = new XDocument(GetDirectoryXml(dir));
-            return doc;
+            var user = await _context.Users.Include(x => x.ResourceAccesses).ThenInclude(x=>x.OwnerUser)
+                .SingleOrDefaultAsync(x => x.UserName == userName);
+            foreach (var resource in user.ResourceAccesses)
+            {
+                var fullPath=PathUtilities.ConvertUserPathToFullPath(resource.Path);
+                var resourceDirInfo = new DirectoryInfo(fullPath);
+                var resourceStructure=GetDirectoryXml(resourceDirInfo);
+                if (resourceStructure.Attribute("name").Value==resource.OwnerUser.UserName)
+                    resourceStructure.Attribute("name").Value = "\\";
+                var userElement= new XElement("owner", new XAttribute("name", resource.OwnerUser.UserName));
+                userElement.Add(resourceStructure);
+                root.Add(userElement);
+            }
+            resultDocument.Add(root);
+            return resultDocument;
         }
         private XElement GetDirectoryXml(DirectoryInfo dir)
         {
-            var info = new XElement("dir", new XAttribute("name", dir.Name));
-
+            var doc = new XElement("dir", new XAttribute("name", dir.Name));
             foreach (var file in dir.GetFiles())
             {
-                info.Add(new XElement("file", new XAttribute("name", file.Name)));
+                doc.Add(new XElement("file", new XAttribute("name", file.Name)));
             }
-
             foreach (var subDir in dir.GetDirectories())
             {
-                info.Add(GetDirectoryXml(subDir));
+                doc.Add(GetDirectoryXml(subDir));
             }
-
-            return info;
+            return doc;
         }
         public void RemoveDirectory(string userName, string path)
         {
-            string serverPath = GenerateServerPath(userName, path);
+            string serverPath = PathUtilities.GenerateFullPath(userName, path);
             Directory.Delete(serverPath, true);
-        }
-        private string GenerateServerPath(string userName, string path = "")
-        {
-            return $@"{mainPath}\{userName}\{path}";
         }
     }
 }

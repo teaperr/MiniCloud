@@ -1,4 +1,5 @@
-﻿using System.Xml.Linq;
+﻿using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace MiniCloudServer.Services
 {
@@ -6,7 +7,7 @@ namespace MiniCloudServer.Services
     {
         void CreateDirectory(string userName, string path, string directoryName);
         void CreateUserDirectory(string userName);
-        XDocument GetDirectoryStructure(string userName);
+        Task<XDocument> GetDirectoryStructure(string userName);
         void RemoveDirectory(string userName, string path);
     }
 }

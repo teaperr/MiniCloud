@@ -13,7 +13,8 @@ namespace MiniCloudServer.Controllers
     public class DirectoryController:Controller
     {
         private readonly IDirectoryService _directoryService;
-        private readonly AccountService _accountService;
+        private readonly IAccountService _accountService;
+        private readonly IResourceAccessService _resourceAccessService;
 
         public DirectoryController(Session session): base(session)
         {
@@ -21,8 +22,8 @@ namespace MiniCloudServer.Controllers
             var dbContext = new MiniCloudContext();
             var encryptService = new EncryptService();
             _accountService = new AccountService(dbContext, encryptService, session);
+            _resourceAccessService=new ResourceAccessService();
         }
-
 
         public async Task<string> Create(string path,string directoryName)
         {
@@ -33,14 +34,20 @@ namespace MiniCloudServer.Controllers
         public async Task<string> Structure()
         {
             var userName = (await _accountService.GetLoggedUser()).UserName;
-            var structure=_directoryService.GetDirectoryStructure(userName).ToString();
-            return structure;
+            var structure=await _directoryService.GetDirectoryStructure(userName);
+            return structure.ToString();
         }
         public async Task<string> Remove(string path)
         {
             var userName = (await _accountService.GetLoggedUser()).UserName;
             _directoryService.RemoveDirectory(userName,path);
             return "Removed";
+        }
+        public async Task<string> Share(string doneeName, string path)
+        {
+            var userName = (await _accountService.GetLoggedUser()).UserName;
+            await _resourceAccessService.ShareAccessToResourceAsync(doneeName,userName,path);
+            return "OK";
         }
     }
 }

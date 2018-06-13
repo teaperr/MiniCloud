@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using MiniCloud.Entities;
+using MiniCloudServer.Entities;
 
 namespace MultiServer.Services
 {

@@ -1,6 +1,9 @@
-﻿using Server.Services;
+﻿using MiniCloudServer.Persistence;
+using Server.Services;
+using System;
+using System.Collections.Generic;
 
-namespace MiniCloud.Entities
+namespace MiniCloudServer.Entities
 {
     public class User
     {
@@ -9,8 +12,11 @@ namespace MiniCloud.Entities
         public string HashedPassword { get; private set; }
         public string Salt { get; private set; }
 
+        public HashSet<ResourceAccess> ResourceAccesses {get; private set; }
+
         public User(string userName, string password)
         {
+            ResourceAccesses=new HashSet<ResourceAccess>();
             SetUserName(userName);
             SetPassword(password);
         }
