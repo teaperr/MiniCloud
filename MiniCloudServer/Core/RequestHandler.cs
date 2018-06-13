@@ -37,7 +37,7 @@ namespace MiniCloud.Core
                 var methodName= splitedRequest[1];
                 var methodInfo=GetMethod(controllerType,methodName);
                 if (methodInfo == null)
-                    throw new MiniCloudException($"Method {methodName} doesn't exists in {controllerName}");
+                    throw new MiniCloudException($"Method {methodName} doesn't exists in {controllerName} controller");
 
                 var parameters=methodInfo.GetParameters();
                 var arguments=splitedRequest.Skip(2);
@@ -90,7 +90,7 @@ namespace MiniCloud.Core
 
         private MethodInfo GetMethod(Type controllerType, string methodName)
         {
-            return controllerType.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+            return controllerType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
                 .Where(x=> String.Compare(x.Name.ToUnderScore(),methodName)==0)
                 .SingleOrDefault();
         }

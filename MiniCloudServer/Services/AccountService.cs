@@ -4,6 +4,7 @@ using MiniCloud.Entities;
 using MiniCloudServer.Core;
 using MiniCloudServer.Exceptions;
 using MiniCloudServer.Persistence;
+using MiniCloudServer.Services;
 using Server.Services;
 using System;
 using System.Collections.Generic;
@@ -13,17 +14,19 @@ using System.Threading.Tasks;
 
 namespace MultiServer.Services
 {
-    public class AccountService
+    public class AccountService: IAccountService
     {
         private readonly MiniCloudContext _dbContext;
         private readonly IEncryptService _encryptService;
         private readonly Session _session;
+        private readonly IDirectoryService _directoryService;
 
         public AccountService(MiniCloudContext dbContext, IEncryptService encryptService, Session session)
         {
             _dbContext = dbContext;
             _encryptService=encryptService;
             _session = session;
+            _directoryService=new DirectoryService();
         }
         public async Task RegisterUserAsync(string userName, string password)
         {
@@ -32,6 +35,7 @@ namespace MultiServer.Services
                 throw new MiniCloudException("User with this name already exists");
             user=new User(userName,password);
             await _dbContext.Users.AddAsync(user);
+            _directoryService.CreateUserDirectory(userName);
             await _dbContext.SaveChangesAsync();
         }
         public async Task LoginUserAsync(string userName, string password)
