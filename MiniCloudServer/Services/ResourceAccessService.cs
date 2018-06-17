@@ -33,13 +33,16 @@ namespace MiniCloudServer.Services
                 throw new MiniCloudException("User doesn't exists");
 
             //jeśli przyznano już dostęp do katalogu nadrzędnego to przyznawanie dostępu do aktualnego katalogu nie ma sensu
-            if(donneeUser.ResourceAccesses.Any(x=>userPath.Contains(x.Path)))
-                throw new Exception("Access alrady granted");
+            if(donneeUser.ResourceAccesses.Any(x=>userPath.StartsWith(x.Path)))
+                throw new MiniCloudException("Access alrady granted");
 
             //jeśli są jakieś dostępy do plików lub katalogów wewnątrz katalogu, którego chcemy dać dostęp to możemy je wyrzucić,
             //bo i tak będzie dostęp z poziomu dodawanego katalogu
-            donneeUser.ResourceAccesses.RemoveWhere(x=>x.Path.StartsWith(userPath));  
-            
+            var resourcesToDelete=donneeUser.ResourceAccesses.Where(x=>x.Path.StartsWith(userPath));     //do sprawdzenia
+            foreach(var resourceToDelete in resourcesToDelete)
+            {
+                _dbContext.ResourceAccesses.Remove(resourceToDelete);
+            }
             var resourceAccess=new ResourceAccess(userPath,ownerUser.Id,donneeUser.Id);
             await _dbContext.ResourceAccesses.AddAsync(resourceAccess);
             await _dbContext.SaveChangesAsync();
