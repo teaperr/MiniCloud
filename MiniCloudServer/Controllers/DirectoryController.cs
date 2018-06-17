@@ -57,7 +57,7 @@ namespace MiniCloudServer.Controllers
         public async Task<string> ListUsersWithAccess(string path)
         {
             var userName = (await _accountService.GetLoggedUser(Session)).UserName;
-            var usersWithAccess=await _resourceAccessService.ListUserWithAccessToResource(userName,path);
+            var usersWithAccess=_resourceAccessService.ListUserWithAccessToResource(userName,path);
             return String.Join(';',usersWithAccess);
         }
     }

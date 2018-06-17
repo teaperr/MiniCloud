@@ -8,6 +8,6 @@ namespace MiniCloudServer.Services
     {
         Task ShareAccessToResourceAsync(string doneeName, string ownerName, string path);
         Task StopShareAccessToResourceAsync(string doneeName, string ownerName, string path);
-        Task<IEnumerable<string>> ListUserWithAccessToResource(string ownerName, string path);
+        IEnumerable<string> ListUserWithAccessToResource(string ownerName, string path);
     }
 }

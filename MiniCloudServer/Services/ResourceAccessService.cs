@@ -21,7 +21,7 @@ namespace MiniCloudServer.Services
             _dbContext=new MiniCloudContext();
         }
 
-        public async Task<IEnumerable<string>> ListUserWithAccessToResource(string ownerName, string path)
+        public IEnumerable<string> ListUserWithAccessToResource(string ownerName, string path)
         {
             var userPath = PathUtilities.GenerateUserPath(ownerName, path);
             if(!Directory.Exists(PathUtilities.ConvertUserPathToFullPath(userPath)))
