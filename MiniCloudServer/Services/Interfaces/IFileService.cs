@@ -5,7 +5,7 @@ using System.Xml;
 
 namespace MiniCloudServer.Services.Interfaces
 {
-    public interface IFileService
+    public interface IFileService : IService
     {
         void UploadFile(string userName, byte[] fileBytes, string folderPath);
         byte[] DownloadFile(string userName, string path);

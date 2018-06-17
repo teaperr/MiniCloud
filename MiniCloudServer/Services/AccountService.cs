@@ -10,22 +10,21 @@ using System.Threading.Tasks;
 
 namespace MultiServer.Services
 {
-    public class AccountService: IAccountService
+    public class AccountService:IAccountService
     {
         private readonly MiniCloudContext _dbContext;
         private readonly IEncryptService _encryptService;
-        private readonly Session _session;
         private readonly IDirectoryService _directoryService;
-        private readonly ResourceAccessService _resourceAccessService;
+        private readonly IResourceAccessService _resourceAccessService;
 
-        public AccountService(MiniCloudContext dbContext, IEncryptService encryptService, Session session)
+        public AccountService(MiniCloudContext dbContext, IEncryptService encryptService, IDirectoryService directoryService, IResourceAccessService resourceAccessService)
         {
             _dbContext = dbContext;
-            _encryptService=encryptService;
-            _session = session;
-            _directoryService=new DirectoryService();
-            _resourceAccessService=new ResourceAccessService();
+            _encryptService = encryptService;
+            _directoryService = directoryService;
+            _resourceAccessService = resourceAccessService;
         }
+
         public async Task RegisterUserAsync(string userName, string password)
         {
             var user=await _dbContext.Users.SingleOrDefaultAsync(x=>x.UserName==userName);
@@ -37,7 +36,7 @@ namespace MultiServer.Services
             await _dbContext.SaveChangesAsync();
             await _resourceAccessService.ShareAccessToResourceAsync(userName, userName, "");
         }
-        public async Task LoginUserAsync(string userName, string password)
+        public async Task LoginUserAsync(string userName, string password, Session session)
         {
             var user=await _dbContext.Users.SingleOrDefaultAsync(x=>x.UserName==userName);
             if(user==null)
@@ -45,11 +44,11 @@ namespace MultiServer.Services
             var hashedPassword=_encryptService.Compute(password,user.Salt);
             if(user.HashedPassword!=hashedPassword)
                 throw new MiniCloudException("Invalid Credentials");
-            _session.AddObject("logged_user_id",user.Id);
+            session.AddObject("logged_user_id",user.Id);
         }
-        public Task<User> GetLoggedUser()
+        public Task<User> GetLoggedUser(Session session)
         {
-            if (!_session.TryGetValue("logged_user_id", out object loggedUserIdObject))
+            if (!session.TryGetValue("logged_user_id", out object loggedUserIdObject))
                 throw new MiniCloudException("No one is logged");
             var user=_dbContext.Users.SingleOrDefault(x=>x.Id==(int)loggedUserIdObject);
             return Task.FromResult(user);

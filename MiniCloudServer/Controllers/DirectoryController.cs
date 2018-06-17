@@ -16,36 +16,34 @@ namespace MiniCloudServer.Controllers
         private readonly IAccountService _accountService;
         private readonly IResourceAccessService _resourceAccessService;
 
-        public DirectoryController(Session session): base(session)
+        public DirectoryController(IDirectoryService directoryService, IAccountService accountService, IResourceAccessService resourceAccessService)
         {
-            _directoryService =new DirectoryService();
-            var dbContext = new MiniCloudContext();
-            var encryptService = new EncryptService();
-            _accountService = new AccountService(dbContext, encryptService, session);
-            _resourceAccessService=new ResourceAccessService();
+            _directoryService = directoryService;
+            _accountService = accountService;
+            _resourceAccessService = resourceAccessService;
         }
 
         public async Task<string> Create(string path,string directoryName)
         {
-            var userName=(await _accountService.GetLoggedUser()).UserName;
+            var userName=(await _accountService.GetLoggedUser(Session)).UserName;
             _directoryService.CreateDirectory(userName,path,directoryName);
             return "Created";
         }
         public async Task<string> Structure()
         {
-            var userName = (await _accountService.GetLoggedUser()).UserName;
+            var userName = (await _accountService.GetLoggedUser(Session)).UserName;
             var structure=await _directoryService.GetDirectoryStructure(userName);
             return structure.ToString();
         }
         public async Task<string> Remove(string path)
         {
-            var userName = (await _accountService.GetLoggedUser()).UserName;
+            var userName = (await _accountService.GetLoggedUser(Session)).UserName;
             _directoryService.RemoveDirectory(userName,path);
             return "Removed";
         }
         public async Task<string> Share(string doneeName, string path)
         {
-            var userName = (await _accountService.GetLoggedUser()).UserName;
+            var userName = (await _accountService.GetLoggedUser(Session)).UserName;
             await _resourceAccessService.ShareAccessToResourceAsync(doneeName,userName,path);
             return "OK";
         }

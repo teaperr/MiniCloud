@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MiniCloudServer.Core
+namespace MiniCloudServer.Utilities
 {
     public static class PathUtilities
     {

@@ -2,13 +2,13 @@
 
 namespace MiniCloudServer.Controllers
 {
-    public class Controller: IController
+    public abstract class Controller: IController
     {
-        protected readonly Session Session;
+        protected Session Session;
 
-        public Controller(Session session)
+        public void SetSession(Session session)
         {
-            Session = session;
+            Session=session;
         }
     }
 }

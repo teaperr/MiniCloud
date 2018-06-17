@@ -1,6 +1,8 @@
-﻿using MiniCloudServer.Controllers;
+﻿using Autofac;
+using MiniCloudServer.Controllers;
 using MiniCloudServer.Exceptions;
 using MiniCloudServer.Extensions;
+using MiniCloudServer.IoC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,7 +45,9 @@ namespace MiniCloudServer.Core
                     throw new MiniCloudException(correctUsage);
                 }
                     
-                var controller=Activator.CreateInstance(controllerType,_currentClient.Session);
+                //var controller=Activator.CreateInstance(controllerType,_currentClient.Session);
+                var controller=Bootstraper.Container.ResolveNamed<IController>(controllerType.Name);
+                controller.SetSession(_currentClient.Session);
 
                 string response;
                 if(methodInfo.ReturnType==typeof(Task<string>))
