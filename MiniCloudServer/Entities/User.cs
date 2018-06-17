@@ -12,7 +12,7 @@ namespace MiniCloudServer.Entities
         public string HashedPassword { get; private set; }
         public string Salt { get; private set; }
 
-        public HashSet<ResourceAccess> ResourceAccesses {get; private set; }
+        public ICollection<ResourceAccess> ResourceAccesses {get; private set; }
 
         public User(string userName, string password)
         {

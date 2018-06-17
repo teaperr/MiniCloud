@@ -39,7 +39,7 @@ namespace MiniCloudServer.Services
             var resultDocument = new XDocument();
             var root=new XElement("root");
 
-            var user = await _context.Users.Include(x => x.ResourceAccesses).ThenInclude(x=>x.OwnerUser)
+            var user = await _context.Users.Include(x => x.ResourceAccesses).ThenInclude(x=>x.OwnerUser).AsNoTracking()
                 .SingleOrDefaultAsync(x => x.UserName == userName);
             var resourceGroupedByOwnerName= user.ResourceAccesses.GroupBy(x=>x.OwnerUser.UserName).ToDictionary(x=>x.Key, y=>y.ToList());
             foreach (var resourcesByOwner in resourceGroupedByOwnerName)

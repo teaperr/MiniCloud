@@ -5,6 +5,7 @@ using MultiServer.Services;
 using Server.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -46,6 +47,18 @@ namespace MiniCloudServer.Controllers
             var userName = (await _accountService.GetLoggedUser(Session)).UserName;
             await _resourceAccessService.ShareAccessToResourceAsync(doneeName,userName,path);
             return "OK";
+        }
+        public async Task<string> StopShare(string doneeName, string path)
+        {
+            var userName = (await _accountService.GetLoggedUser(Session)).UserName;
+            await _resourceAccessService.StopShareAccessToResourceAsync(doneeName, userName, path);
+            return "OK";
+        }
+        public async Task<string> ListUsersWithAccess(string path)
+        {
+            var userName = (await _accountService.GetLoggedUser(Session)).UserName;
+            var usersWithAccess=await _resourceAccessService.ListUserWithAccessToResource(userName,path);
+            return String.Join(';',usersWithAccess);
         }
     }
 }
