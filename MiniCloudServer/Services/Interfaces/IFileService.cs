@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
+﻿using MiniCloudServer.Services.Interfaces;
+using System.Threading.Tasks;
 
-namespace MiniCloudServer.Services.Interfaces
+namespace MiniCloudServer.Services
 {
-    public interface IFileService : IService
+    public interface IFileService: IService
     {
-        void UploadFile(string userName, byte[] fileBytes, string folderPath);
-        byte[] DownloadFile(string userName, string path);
-        void RemoveFile(string userName, string path);
-
+        Task<byte[]> DownloadFile(string userName, string filePath);
+        void RemoveFile(string userName, string filePath);
+        Task UploadFile(string userName, string directoryPath, string fileName, byte[] fileBytes);
     }
 }

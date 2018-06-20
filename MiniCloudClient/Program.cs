@@ -2,6 +2,8 @@
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
+using System.IO;
+using System.Linq;
 
 namespace MultiClient
 {
@@ -11,6 +13,8 @@ namespace MultiClient
             (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
         private const int PORT = 100;
+        private const int BUFFER_SIZE = 50 * 1000 * 1000;
+        private static readonly byte[] buffer = new byte[BUFFER_SIZE];
 
         static void Main()
         {
@@ -82,6 +86,18 @@ namespace MultiClient
         /// </summary>
         private static void SendString(string text)
         {
+            if(text.StartsWith("file upload") && text.Split().Length==5)
+            {
+                var filePath=text.Split().Last();
+                if(File.Exists(filePath))
+                {
+                    Console.WriteLine("File doesn't exists");
+                    return;
+                }
+                var bytes=File.ReadAllBytes(filePath);
+                var base64File=Convert.ToBase64String(bytes);
+                text=$"{String.Join(' ',text.Split().SkipLast(1))} {base64File}";
+            }
             byte[] buffer = Encoding.ASCII.GetBytes(text);
             ClientSocket.Send(buffer);
         }
@@ -90,9 +106,9 @@ namespace MultiClient
         {
             string text;
             do {
-                var buffer = new byte[2048];
                 int received = ClientSocket.Receive(buffer, SocketFlags.None);
-                if (received == 0) return;
+                if (received == 0) 
+                    return;
                 var data = new byte[received];
                 Array.Copy(buffer, data, received);
                 text = Encoding.ASCII.GetString(data);
