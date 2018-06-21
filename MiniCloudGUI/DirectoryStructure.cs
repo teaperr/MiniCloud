@@ -8,31 +8,30 @@ namespace MiniCloudGUI
 {
     public class MCOwner
     {
-        public ICollection<MCDirectory> Directories { get; set; }
+        public ICollection<MCStructure> Structures { get; set; }
         public string Name { get; set; }
         public MCOwner(string name)
         {
-            Directories=new List<MCDirectory>();
+            Structures=new List<MCStructure>();
             Name=name;
         }
     }
 
-    public class MCDirectory
+    public class MCStructure
     {
-        public ICollection<MCDirectory> Directories { get; set; }
-        public ICollection<MCFile> Files { get; set; }
+        public ICollection<MCStructure> Structures { get; set; }
         public string Name { get; set; }
+        public string Path { get; set; }
+        public string OwnerName { get; set; }
+        public bool IsFile { get; set; }
 
-        public MCDirectory(string name)
+        public MCStructure(string name, string path, string ownerName, bool isFile)
         {
-            Directories=new List<MCDirectory>();
-            Files=new List<MCFile>();
+            Structures=new List<MCStructure>();
             Name=name;
+            Path=path;
+            OwnerName = ownerName;
+            IsFile=isFile;
         }
-    }
-
-    public class MCFile
-    {
-        public string Name { get; set; }
     }
 }

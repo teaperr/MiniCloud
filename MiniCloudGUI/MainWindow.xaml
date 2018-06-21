@@ -13,18 +13,38 @@
                 <Button x:Name="LoginButton" Content="Logowanie" HorizontalAlignment="Left" Margin="124,57,0,0" VerticalAlignment="Top" Width="113" Click="Login_Click" Height="20"/>
                 <Label Content="Login" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,0,0,0" Height="26" Width="39"/>
                 <Label Content="Hasło" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="9,26,0,0" Height="26" Width="40"/>
-                <TextBox HorizontalAlignment="Left" Height="23" Margin="54,4,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" Width="183" x:Name="LoginTextBox"/>
-                <TextBox HorizontalAlignment="Left" Height="23" Margin="54,30,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="183" x:Name="PasswordTextBox"/>
+                <TextBox HorizontalAlignment="Left" Height="23" Margin="54,4,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" Width="183" x:Name="LoginTextBox" Text="michal"/>
+                <TextBox HorizontalAlignment="Left" Height="23" Margin="54,30,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="183" x:Name="PasswordTextBox" Text="korniak"/>
                 <Button Content="Button" HorizontalAlignment="Left" Margin="303,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click"/>
             </Grid>
 
         </Border>
-        <TreeView Name="DirectoryTreeView" HorizontalAlignment="Left" Height="317" VerticalAlignment="Top" Width="393" Margin="7,92,0,0">
-            <TreeView.ItemTemplate>
-                <HierarchicalDataTemplate DataType="{x:Type local:MCOwner}" ItemsSource="{Binding Directories}">
+        <TreeView Name="DirectoryTreeView" HorizontalAlignment="Left" Height="317" VerticalAlignment="Top" Width="393" Margin="7,92,0,0" SelectedItemChanged="DirectoryTreeView_SelectedItemChanged">
+            <TreeView.Resources>
+                <ContextMenu x:Key ="DirectoryContext"  StaysOpen="true">
+                    <MenuItem Header="Upload file here.." Click="UploadFileHere"/>
+                    <MenuItem Header="Create new directory..."/>
+                    <Separator/>
+                    <MenuItem Header="Share"/>
+                    <MenuItem Header="Stop Share"/>
+                </ContextMenu>
+                <ContextMenu x:Key="FileContext"  StaysOpen="true">
+                    <MenuItem Header="Download"/>
+                    <MenuItem Header="Remove"/>
+                </ContextMenu>
+            </TreeView.Resources>
+            <TreeView.ItemTemplate >
+                <HierarchicalDataTemplate DataType="{x:Type local:MCOwner}" ItemsSource="{Binding Structures}">
                     <TextBlock Text="{Binding Name}" />
+                    <HierarchicalDataTemplate.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding Structures}">
+                            <TextBlock Text="{Binding Name}" />
+                        </HierarchicalDataTemplate>
+                    </HierarchicalDataTemplate.ItemTemplate>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
-        </TreeView>
+            
+
+            </TreeView>
     </Grid>
 </Window>

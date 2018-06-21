@@ -104,9 +104,7 @@ namespace MiniCloudGUI
                 }
                 else
                 {
-                    MessageBox.Show("Zalogowano");
                     LoadDirectoryStructure();
-
                 }
             };
         }
@@ -126,9 +124,10 @@ namespace MiniCloudGUI
             backgroundWork.RunWorkerCompleted += (s, e1) =>
             {
                 var structure = result.Substring(6);
-                FillDirectoryTree(structure);
+                DirectoryTreeView.ItemsSource = GetStructure(structure);
             };
         }
+
         private IEnumerable<MCOwner> GetStructure(string structure)
         {
             XmlDocument xml = new XmlDocument();
@@ -137,75 +136,46 @@ namespace MiniCloudGUI
             var owners = new List<MCOwner>();
             foreach (XmlElement xmlOwner in xmlOwners)
             {
-                var owner= new MCOwner(xmlOwner.GetAttribute("name"));
+                string ownerName= xmlOwner.GetAttribute("name");
+                var owner= new MCOwner(ownerName);
                 owners.Add(owner);
-                owner.Directories=GetDirectoriesStructure(xmlOwner);
+                owner.Structures=GetDirectoriesStructure(xmlOwner, ownerName);
             }
             return owners;
             
         }
-
-        private ICollection<MCDirectory> GetDirectoriesStructure(XmlElement xmlOwner)
+        private ICollection<MCStructure> GetDirectoriesStructure(XmlElement xmlOwner, string ownerName)
         {
-            foreach (XmlElement child in rootDirectory.ChildNodes)
+            var result=new List<MCStructure>();
+            foreach (XmlElement child in xmlOwner.ChildNodes)
             {
-                var item = new TreeViewItem();
+                string attributeName= child.GetAttribute("name");
+                string path = $"{attributeName}";
+                var directory=new MCStructure(attributeName,path,ownerName, false);
+                GenerateDirectoryStructure(directory,ownerName, child);
+                result.Add(directory);
+            }
+            return result;
+        }
+        private void GenerateDirectoryStructure(MCStructure parentDir, string ownerName, XmlElement parentNode)
+        {
+            foreach (XmlElement child in parentNode.ChildNodes)
+            {
+                var attributeName= child.GetAttribute("name");
+                var path= $"{parentDir.Path}\\{attributeName}";
                 if (child.Name == "file")
                 {
-                    var fileName = child.GetAttribute("name");
-                    if (fileName.Split('.').Count() == 1)
-                    {
-                        fileName += ".file";
-                        item.Header = fileName;
-                        rootItem.Items.Add(item);
-                        continue;
-                    }
+                    parentDir.Structures.Add(new MCStructure(attributeName, path, ownerName, true));
                 }
-                item.Header = child.GetAttribute("name");
-                rootItem.Items.Add(item);
-                AddDirectoriesToTreeView(item, child);
-            }
-        }
-
-        private void FillDirectoryTree(string structure)
-        {
-            XmlDocument xml = new XmlDocument();
-            xml.LoadXml(structure);
-            var owners=xml.FirstChild.ChildNodes;
-            foreach(XmlElement owner in owners)
-            {
-                var ownerItem=new TreeViewItem();
-                ownerItem.Header=owner.GetAttribute("name");
-                foreach(XmlElement directory in owner.ChildNodes)
+                else
                 {
-                    AddDirectoriesToTreeView(ownerItem, directory);
+                    var directory= new MCStructure(attributeName, path,ownerName,false);
+                    parentDir.Structures.Add(directory);
+                    GenerateDirectoryStructure(directory, ownerName, child);
                 }
-                DirectoryTreeView.Items.Add(ownerItem);
+
             }
         }
-
-        private void AddDirectoriesToTreeView(TreeViewItem rootItem, XmlElement rootDirectory)
-        {
-            foreach (XmlElement child in rootDirectory.ChildNodes)
-            {
-                var item = new TreeViewItem();
-                if(child.Name=="file")
-                {
-                    var fileName=child.GetAttribute("name");
-                    if(fileName.Split('.').Count()==1)
-                    {
-                        fileName+=".file";
-                        item.Header = fileName;
-                        rootItem.Items.Add(item);
-                        continue;
-                    }
-                }
-                item.Header = child.GetAttribute("name");
-                rootItem.Items.Add(item);
-                AddDirectoriesToTreeView(item, child);
-            }
-        }
-
         private void Register_Click(object sender, RoutedEventArgs e)
         {
             string login = LoginTextBox.Text;
@@ -243,23 +213,61 @@ namespace MiniCloudGUI
         }
         private void EnableLoginPanel(bool enable)
         {
-            LoginButton.IsEnabled = enable;
-            RegisterButton.IsEnabled = enable;
-            LoginTextBox.IsEnabled = enable;
-            PasswordTextBox.IsEnabled = enable;
+            //LoginButton.IsEnabled = enable;
+            //RegisterButton.IsEnabled = enable;
+            //LoginTextBox.IsEnabled = enable;
+            //PasswordTextBox.IsEnabled = enable;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            var structureFromFile = File.ReadAllText("structure.txt");
-            var ownerList=new List<MCOwner>()
+        }
+
+        private void DirectoryTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            TreeViewItem SelectedItem = DirectoryTreeView.SelectedItem as TreeViewItem;
+            if(e.NewValue is MCStructure)
             {
-                new MCOwner() { Name="xxx"},
-                new MCOwner() {Name="yyy"}
+                var structure = e.NewValue as MCStructure;
+                if(structure.IsFile)
+                    DirectoryTreeView.ContextMenu = DirectoryTreeView.Resources["FileContext"] as ContextMenu;
+                else
+                DirectoryTreeView.ContextMenu = DirectoryTreeView.Resources["DirectoryContext"] as ContextMenu;
+            }
+        }
+
+        private void UploadFileHere(object sender, RoutedEventArgs e)
+        {
+            var directory= DirectoryTreeView.SelectedItem as MCStructure;
+
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            bool? openedFile = dlg.ShowDialog();
+            if (openedFile != true)
+                return;
+            var base64file=Convert.ToBase64String(File.ReadAllBytes(dlg.FileName));
+
+            var fileName= System.IO.Path.GetFileName(dlg.FileName);
+            
+
+            var request = $"file upload {directory.Path} {fileName} {base64file}";
+            string result = null;
+
+            var backgroundWork = new BackgroundWorker();
+            backgroundWork.DoWork += (s, e1) =>
+            {
+                SendRequest(request);
+                result = ReceiveResponse();
             };
-            ownerList.First().Directories.Add(new MCDirectory() { Name="aaa"});
-            DirectoryTreeView.ItemsSource=ownerList;
-            //FillDirectoryTree(structureFromFile);
+            backgroundWork.RunWorkerAsync();
+            backgroundWork.RunWorkerCompleted += (s, e1) =>
+            {
+                if (result.StartsWith("_ERROR_"))
+                {
+                    MessageBox.Show($"Nie udało się wysłać pliku.\n{result}");
+                }
+                else
+                    MessageBox.Show("OK");
+            };
         }
     }
 }
