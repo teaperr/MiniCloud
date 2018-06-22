@@ -68,10 +68,10 @@ namespace MiniCloudServer
             }
             string text = GetReceivedText(received);
             
-            if(text.Length>50)
-                Console.Write($"Received: {text.Substring(0, 50)}...");
+            if(text.Length>100)
+                Console.WriteLine($"Request: {text.Substring(0, 100)}...");
             else
-                Console.Write("Received: " + text);
+                Console.WriteLine("Request: " + text);
             var requestHandler = new RequestHandler(client);
             requestHandler.Handle(text).Wait();
             BeginReceive(client.Socket);

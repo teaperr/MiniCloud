@@ -5,7 +5,7 @@ namespace MiniCloudServer.Services
 {
     public interface IFileService: IService
     {
-        Task<byte[]> DownloadFile(string userName, string filePath);
+        Task<byte[]> DownloadFile(string userName, string ownerName, string filePath);
         void RemoveFile(string userName, string filePath);
         Task UploadFile(string userName, string directoryPath, string fileName, byte[] fileBytes);
     }

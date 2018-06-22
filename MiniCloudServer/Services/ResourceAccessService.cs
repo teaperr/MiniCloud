@@ -24,7 +24,7 @@ namespace MiniCloudServer.Services
         public IEnumerable<string> ListUserWithAccessToResource(string ownerName, string path)
         {
             var userPath = PathUtilities.GenerateUserPath(ownerName, path);
-            if(!Directory.Exists(PathUtilities.ConvertUserPathToFullPath(userPath)))
+            if(!Directory.Exists(PathUtilities.ConvertUserPathToFullPath(userPath)) && !File.Exists(PathUtilities.ConvertUserPathToFullPath(userPath)))
                 throw new MiniCloudException("Path is not valid");
 
             var usersWithAccess=_dbContext.ResourceAccesses.Include(x=>x.DoneeUser).Where(x=>userPath.StartsWith(x.Path)).Select(x=>x.DoneeUser.UserName);

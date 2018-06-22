@@ -16,10 +16,10 @@ namespace MiniCloudServer.Controllers
             _fileService = fileService;
         }
 
-        public async Task<string> Download(string filePath)
+        public async Task<string> Download(string ownerName,string filePath)
         {
             var userName = await GetLoggedUserName();
-            var fileBytes= (await _fileService.DownloadFile(userName, filePath));
+            var fileBytes= (await _fileService.DownloadFile(userName, ownerName, filePath));
             var base64File = Convert.ToBase64String(fileBytes);
 
             return base64File;

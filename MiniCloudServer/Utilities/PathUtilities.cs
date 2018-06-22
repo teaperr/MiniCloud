@@ -15,6 +15,7 @@ namespace MiniCloudServer.Utilities
         }
         public static string GenerateUserPath(string userName, string path = "")
         {
+            path=path.TrimStart('\\');
             return $@"{userName}\{path}";
         }
         public static string ConvertUserPathToFullPath(string userPath)

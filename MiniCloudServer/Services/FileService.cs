@@ -4,16 +4,27 @@ using MiniCloudServer.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace MiniCloudServer.Services
 {
-    class FIleService : IFileService
+    class FileService : IFileService
     {
-        public async Task<byte[]> DownloadFile(string userName, string filePath)
+        private readonly IResourceAccessService _resourceAccessService;
+
+        public FileService(IResourceAccessService resourceAccessService)
         {
-            string fileServerPath = PathUtilities.GenerateFullPath(userName, filePath);
+            _resourceAccessService = resourceAccessService;
+        }
+
+        public async Task<byte[]> DownloadFile(string userName, string ownerName, string filePath)
+        {
+            var usersWithAccess=_resourceAccessService.ListUserWithAccessToResource(ownerName,filePath);
+            if(!usersWithAccess.Contains(userName))
+                throw new MiniCloudException("User doesn't have access to resource");
+            string fileServerPath = PathUtilities.GenerateFullPath(ownerName, filePath);
             if (!File.Exists(fileServerPath))
                 throw new MiniCloudException("File doesn't exists");
             var fileBytes= await File.ReadAllBytesAsync(fileServerPath);;

@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Net.Sockets;
 using System.Text;
 
 namespace MiniCloudServer.Core
@@ -15,6 +16,11 @@ namespace MiniCloudServer.Core
         }
         public void SendText(string text)
         {
+
+            if (text.Length > 100)
+                Console.WriteLine($"Response: {text.Substring(0, 100)}...");
+            else
+                Console.WriteLine("Response: " + text);
             byte[] data = Encoding.ASCII.GetBytes(text);
             Socket.Send(data);
         }
