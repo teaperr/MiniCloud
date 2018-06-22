@@ -51,7 +51,8 @@ namespace MiniCloudGUI
         }
         private void SendRequest(string request)
         {
-            byte[] buffer = Encoding.ASCII.GetBytes(request);
+            var md5request=$"{CheksumGenerator.CreateMD5(request)} {request}";
+            byte[] buffer = Encoding.ASCII.GetBytes(md5request);
             ClientSocket.Send(buffer);
         }
         private string ReceiveResponse()
@@ -63,7 +64,14 @@ namespace MiniCloudGUI
             var data = new byte[received];
             Array.Copy(buffer, data, received);
             text = Encoding.ASCII.GetString(data);
-            return text;
+            var cleanText= text.Substring(33);
+            var md5=text.Substring(0,32);
+            if(CheksumGenerator.CreateMD5(cleanText)!=md5)
+            {
+                MessageBox.Show("Odebrano niekompletne dane");
+                return null;
+            }
+            return cleanText;
         }
         private void Login_Click(object sender, RoutedEventArgs e)
         {
@@ -211,6 +219,8 @@ namespace MiniCloudGUI
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
             {
+                if(result==null)
+                    return;
                 if (result.StartsWith("_ERROR_"))
                 {
                     MessageBox.Show(result);
@@ -242,6 +252,8 @@ namespace MiniCloudGUI
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
             {
+                if (result == null)
+                    return;
                 if (result.StartsWith("_ERROR_"))
                 {
                     MessageBox.Show(result);
@@ -275,6 +287,8 @@ namespace MiniCloudGUI
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
             {
+                if (result == null)
+                    return;
                 if (result.StartsWith("_ERROR_"))
                 {
                     MessageBox.Show(result);
@@ -304,6 +318,8 @@ namespace MiniCloudGUI
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
             {
+                if (result == null)
+                    return;
                 if (result.StartsWith("_ERROR_"))
                 {
                     MessageBox.Show(result);
@@ -331,6 +347,8 @@ namespace MiniCloudGUI
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
             {
+                if (result == null)
+                    return;
                 if (result.StartsWith("_ERROR_"))
                 {
                     MessageBox.Show(result);
@@ -360,6 +378,8 @@ namespace MiniCloudGUI
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
             {
+                if (result == null)
+                    return;
                 if (result.StartsWith("_ERROR_"))
                 {
                     MessageBox.Show(result);
@@ -384,6 +404,8 @@ namespace MiniCloudGUI
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
             {
+                if (result == null)
+                    return;
                 if (result.StartsWith("_ERROR_"))
                 {
                     MessageBox.Show(result);

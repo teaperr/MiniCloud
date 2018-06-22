@@ -4,6 +4,7 @@ using System.Net;
 using System.Text;
 using System.IO;
 using System.Linq;
+using MiniCloudGUI;
 
 namespace MultiClient
 {
@@ -86,19 +87,8 @@ namespace MultiClient
         /// </summary>
         private static void SendString(string text)
         {
-            if(text.StartsWith("file upload") && text.Split().Length==5)
-            {
-                var filePath=text.Split().Last();
-                if(File.Exists(filePath))
-                {
-                    Console.WriteLine("File doesn't exists");
-                    return;
-                }
-                var bytes=File.ReadAllBytes(filePath);
-                var base64File=Convert.ToBase64String(bytes);
-                text=$"{String.Join(' ',text.Split().SkipLast(1))} {base64File}";
-            }
-            byte[] buffer = Encoding.ASCII.GetBytes(text);
+            var md5request = $"{CheksumGenerator.CreateMD5(text)} {text}";
+            byte[] buffer = Encoding.ASCII.GetBytes(md5request);
             ClientSocket.Send(buffer);
         }
 
@@ -112,7 +102,15 @@ namespace MultiClient
                 var data = new byte[received];
                 Array.Copy(buffer, data, received);
                 text = Encoding.ASCII.GetString(data);
-                Console.WriteLine(text);
+                var cleanText = text.Substring(33);
+                var md5 = text.Substring(0, 32);
+                if (CheksumGenerator.CreateMD5(cleanText) != md5)
+                {
+                    Console.WriteLine("Wystapil blad polaczenia");
+                    continue;
+                }
+                Console.WriteLine(cleanText);
+                text=cleanText;
             }while(!text.StartsWith("_OK_") && !text.StartsWith("_ERROR_"));
             
         }

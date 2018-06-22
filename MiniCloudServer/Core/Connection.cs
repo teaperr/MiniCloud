@@ -18,9 +18,9 @@ namespace MiniCloudServer.Core
         {
 
             if (text.Length > 100)
-                Console.WriteLine($"Response: {text.Substring(0, 100)}...");
+                Console.WriteLine($"Response: {text.Substring(33, 133)}...");
             else
-                Console.WriteLine("Response: " + text);
+                Console.WriteLine("Response: " + text.Substring(33));
             byte[] data = Encoding.ASCII.GetBytes(text);
             Socket.Send(data);
         }
