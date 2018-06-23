@@ -29,7 +29,7 @@ namespace MiniCloudServer.Core
                 var md5cheksum=splitedRequest[0];
                 if(CheksumGenerator.CreateMD5(request.Substring(33))!=md5cheksum)
                     throw new MiniCloudException("Incomplete rquest");
-                if(splitedRequest.Length<2)
+                if(splitedRequest.Length<3)
                     throw new MiniCloudException("Invalid Request");
                 var controllerName= splitedRequest[1];
                 var controllerType=GetControllerType(controllerName);

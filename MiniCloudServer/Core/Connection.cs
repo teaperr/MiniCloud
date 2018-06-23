@@ -17,7 +17,7 @@ namespace MiniCloudServer.Core
         public void SendText(string text)
         {
 
-            if (text.Length > 100)
+            if (text.Length > 133)
                 Console.WriteLine($"Response: {text.Substring(33, 133)}...");
             else
                 Console.WriteLine("Response: " + text.Substring(33));

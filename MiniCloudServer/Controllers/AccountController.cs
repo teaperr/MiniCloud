@@ -17,7 +17,6 @@ namespace MiniCloudServer.Controllers
 
         public async Task<string> SayMyName()
         {
-            Thread.Sleep(1000000);
             var user = await AccountService.GetLoggedUser(Session);
             return $"You are {user.UserName}";
         }
