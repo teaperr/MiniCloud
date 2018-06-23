@@ -34,6 +34,32 @@ namespace MiniCloudGUI
                 ConnectToServer();
             }).Start();
         }
+        private void EnableLoginPanel(bool enable)
+        {
+            LoginButton.IsEnabled = enable;
+            RegisterButton.IsEnabled = enable;
+            LoginTextBox.IsEnabled = enable;
+            PasswordTextBox.IsEnabled = enable;
+        }
+        private void DirectoryTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            TreeViewItem SelectedItem = DirectoryTreeView.SelectedItem as TreeViewItem;
+            DirectoryTreeView.ContextMenu = null;
+            if (e.NewValue is MCStructure)
+            {
+                var structure = e.NewValue as MCStructure;
+                if (structure.IsFile)
+                {
+                    if (structure.OwnerName == loggedUserName)
+                        DirectoryTreeView.ContextMenu = DirectoryTreeView.Resources["FileContext"] as ContextMenu;
+                    else
+                        DirectoryTreeView.ContextMenu = DirectoryTreeView.Resources["SharedFileContext"] as ContextMenu;
+                }
+                else if (structure.OwnerName == loggedUserName)
+                    DirectoryTreeView.ContextMenu = DirectoryTreeView.Resources["DirectoryContext"] as ContextMenu;
+            }
+        }
+
         private void ConnectToServer()
         {
             while (!ClientSocket.Connected)
@@ -73,7 +99,22 @@ namespace MiniCloudGUI
             }
             return cleanText;
         }
-        private void Login_Click(object sender, RoutedEventArgs e)
+        private string TrySendRequestAndGetResponse(string request)
+        {
+            try
+            {
+                SendRequest(request);
+                return ReceiveResponse();
+            }
+            catch (SocketException)
+            {
+                MessageBox.Show("Utracono połączenie z serwerem");
+                Environment.Exit(0);
+                return null;
+            }
+        }
+
+        private void Login(object sender, RoutedEventArgs e)
         {
             string login=LoginTextBox.Text;
             string password=PasswordTextBox.Text;
@@ -90,8 +131,7 @@ namespace MiniCloudGUI
             var backgroundWork=new BackgroundWorker();
             backgroundWork.DoWork += (s, e1) =>
             {
-                SendRequest(request);
-                result = ReceiveResponse();
+                result=TrySendRequestAndGetResponse(request);
             };
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
@@ -108,29 +148,7 @@ namespace MiniCloudGUI
                 }
             };
         }
-
-        private void UpdateStructure()
-        {
-            var request = $"directory structure";
-            string result = null;
-
-            var backgroundWork = new BackgroundWorker();
-            backgroundWork.DoWork += (s, e1) =>
-            {
-                SendRequest(request);
-                result = ReceiveResponse();
-            };
-            backgroundWork.RunWorkerAsync();
-            backgroundWork.RunWorkerCompleted += (s, e1) =>
-            {
-                var structure = result.Substring(6);
-                DirectoryTreeView.ItemsSource = MCStructureGenerator.GetStructure(structure);
-            };
-        }
-
-
-
-        private void Register_Click(object sender, RoutedEventArgs e)
+        private void Register(object sender, RoutedEventArgs e)
         {
             string login = LoginTextBox.Text;
             string password = PasswordTextBox.Text;
@@ -147,8 +165,7 @@ namespace MiniCloudGUI
             var backgroundWork = new BackgroundWorker();
             backgroundWork.DoWork += (s, e1) =>
             {
-                SendRequest(request);
-                result = ReceiveResponse();
+                result = TrySendRequestAndGetResponse(request);
             };
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
@@ -164,37 +181,23 @@ namespace MiniCloudGUI
                 }
             };
         }
-        private void EnableLoginPanel(bool enable)
+        private void UpdateStructure()
         {
-            LoginButton.IsEnabled = enable;
-            RegisterButton.IsEnabled = enable;
-            LoginTextBox.IsEnabled = enable;
-            PasswordTextBox.IsEnabled = enable;
-        }
+            var request = $"directory structure";
+            string result = null;
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-        }
-
-        private void DirectoryTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
-        {
-            TreeViewItem SelectedItem = DirectoryTreeView.SelectedItem as TreeViewItem;
-            DirectoryTreeView.ContextMenu = null;
-            if (e.NewValue is MCStructure)
+            var backgroundWork = new BackgroundWorker();
+            backgroundWork.DoWork += (s, e1) =>
             {
-                var structure = e.NewValue as MCStructure;
-                if(structure.IsFile)
-                {
-                    if(structure.OwnerName==loggedUserName)
-                        DirectoryTreeView.ContextMenu = DirectoryTreeView.Resources["FileContext"] as ContextMenu;
-                    else
-                        DirectoryTreeView.ContextMenu = DirectoryTreeView.Resources["SharedFileContext"] as ContextMenu;
-                }
-                else if(structure.OwnerName==loggedUserName)
-                    DirectoryTreeView.ContextMenu = DirectoryTreeView.Resources["DirectoryContext"] as ContextMenu;
-            }
+                result = TrySendRequestAndGetResponse(request);
+            };
+            backgroundWork.RunWorkerAsync();
+            backgroundWork.RunWorkerCompleted += (s, e1) =>
+            {
+                var structure = result.Substring(6);
+                DirectoryTreeView.ItemsSource = MCStructureGenerator.GetStructure(structure);
+            };
         }
-
         private void UploadFileHere(object sender, RoutedEventArgs e)
         {
             var directory= DirectoryTreeView.SelectedItem as MCStructure;
@@ -213,8 +216,7 @@ namespace MiniCloudGUI
             {
                 var base64file = Convert.ToBase64String(File.ReadAllBytes(dlg.FileName));
                 var request = $"file upload {directory.Path} {fileName} {base64file}";
-                SendRequest(request);
-                result = ReceiveResponse();
+                result = TrySendRequestAndGetResponse(request);
             };
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
@@ -229,7 +231,6 @@ namespace MiniCloudGUI
                     UpdateStructure();
             };
         }
-
         private void DownloadFile(object sender, RoutedEventArgs e)
         {
             var file = DirectoryTreeView.SelectedItem as MCStructure;
@@ -246,8 +247,7 @@ namespace MiniCloudGUI
             backgroundWork.DoWork += (s, e1) =>
             {
                 var request = $"file download {file.OwnerName} {file.Path}";
-                SendRequest(request);
-                result = ReceiveResponse();
+                result = TrySendRequestAndGetResponse(request);
             };
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
@@ -265,7 +265,6 @@ namespace MiniCloudGUI
                 }
             };
         }
-
         private void CreateDirectory(object sender, RoutedEventArgs e)
         {
             var directory = DirectoryTreeView.SelectedItem as MCStructure;
@@ -281,8 +280,7 @@ namespace MiniCloudGUI
             backgroundWork.DoWork += (s, e1) =>
             {
                 var request = $"directory create {directory.Path} {newDirectoryName}";
-                SendRequest(request);
-                result = ReceiveResponse();
+                result = TrySendRequestAndGetResponse(request);
             };
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
@@ -298,7 +296,6 @@ namespace MiniCloudGUI
             };
 
         }
-
         private void Remove(object sender, RoutedEventArgs e)
         {
             var item = DirectoryTreeView.SelectedItem as MCStructure;
@@ -312,8 +309,7 @@ namespace MiniCloudGUI
             var backgroundWork = new BackgroundWorker();
             backgroundWork.DoWork += (s, e1) =>
             {
-                SendRequest(request);
-                result = ReceiveResponse();
+                result = TrySendRequestAndGetResponse(request);
             };
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
@@ -341,8 +337,7 @@ namespace MiniCloudGUI
             var backgroundWork = new BackgroundWorker();
             backgroundWork.DoWork += (s, e1) =>
             {
-                SendRequest(request);
-                result = ReceiveResponse();
+                result = TrySendRequestAndGetResponse(request);
             };
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
@@ -359,7 +354,7 @@ namespace MiniCloudGUI
                 }
             };
         }
-        private void  StopShare(object sender, RoutedEventArgs e)
+        private void StopShare(object sender, RoutedEventArgs e)
         {
             var item = DirectoryTreeView.SelectedItem as MCStructure;
             var inputDialog = new InputDialog("Podaj nazwę użytkownika");
@@ -372,8 +367,7 @@ namespace MiniCloudGUI
             var backgroundWork = new BackgroundWorker();
             backgroundWork.DoWork += (s, e1) =>
             {
-                SendRequest(request);
-                result = ReceiveResponse();
+                result = TrySendRequestAndGetResponse(request);
             };
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>
@@ -398,8 +392,7 @@ namespace MiniCloudGUI
             var backgroundWork = new BackgroundWorker();
             backgroundWork.DoWork += (s, e1) =>
             {
-                SendRequest(request);
-                result = ReceiveResponse();
+                result = TrySendRequestAndGetResponse(request);
             };
             backgroundWork.RunWorkerAsync();
             backgroundWork.RunWorkerCompleted += (s, e1) =>

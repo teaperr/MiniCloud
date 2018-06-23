@@ -9,8 +9,8 @@
     <Grid>
         <Border>
             <Grid>
-                <Button x:Name="RegisterButton" Content="Rejestracja" HorizontalAlignment="Left" Margin="9,57,0,0" VerticalAlignment="Top" Width="110" Click="Register_Click" Height="20"/>
-                <Button x:Name="LoginButton" Content="Logowanie" HorizontalAlignment="Left" Margin="124,57,0,0" VerticalAlignment="Top" Width="113" Click="Login_Click" Height="20"/>
+                <Button x:Name="RegisterButton" Content="Rejestracja" HorizontalAlignment="Left" Margin="9,57,0,0" VerticalAlignment="Top" Width="110" Click="Register" Height="20"/>
+                <Button x:Name="LoginButton" Content="Logowanie" HorizontalAlignment="Left" Margin="124,57,0,0" VerticalAlignment="Top" Width="113" Click="Login" Height="20"/>
                 <Label Content="Login" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,0,0,0" Height="26" Width="39"/>
                 <Label Content="Hasło" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="9,26,0,0" Height="26" Width="40"/>
                 <TextBox HorizontalAlignment="Left" Height="23" Margin="54,4,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" Width="183" x:Name="LoginTextBox" Text="michal"/>
