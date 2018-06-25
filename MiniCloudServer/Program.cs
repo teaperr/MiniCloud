@@ -6,8 +6,6 @@ using System.Text;
 using System.Linq;
 using MiniCloudServer.Core;
 
-
-//Based on https://github.com/AbleOpus/NetworkingSamples
 namespace MiniCloudServer
 {
     class Program
@@ -68,7 +66,7 @@ namespace MiniCloudServer
             }
             string text = GetReceivedText(received);
             
-            if(text.Length>100)
+            if(text.Length>133)
                 Console.WriteLine($"Request: {text.Substring(33, 100)}...");
             else
                 Console.WriteLine("Request: " + text.Substring(33));
